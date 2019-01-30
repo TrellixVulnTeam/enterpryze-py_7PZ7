@@ -1,14 +1,19 @@
 import discord
 import asyncio
-from debug import log
+import config
 
 client = discord.Client()
 
 # When bot has loaded
 @client.event
 async def on_ready():
-    log('Logged in as:', client.user.name, "(" + client.user.id ")")
-    log('------')
+    print('[Ryze] Logged in as: ', client.user.name, "(" + client.user.id + ")")
+    
+    # Update status
+    presence = discord.Game(name=config.PREFIX+"help for commands and usage")
+    await client.change_presence(game=presence)
+
+    print('[Ryze] Ready.')
 
 # Handle message events
 @client.event
