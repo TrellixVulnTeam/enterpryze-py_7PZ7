@@ -18,9 +18,12 @@ async def on_ready():
 # Handle message events
 @client.event
 async def on_message(message):
-    print(message.channel.id)
-    if message.content.startswith(config.PREFIX + 'hello'):
-        await client.send_message(message.channel, 'Hello, ' + message.author.mention + ".")
+    # Active chat logging
+    print(message.timestamp, '[' + message.server.name + '/' + message.channel.name + '/' + message.author.name + ']:', message.content)
+
+    # Ping pong testing
+    if message.content.startswith(config.PREFIX + 'ping'):
+        await client.send_message(message.channel, message.author.mention + ': Pong!')
     
     # Count how many messages a user has sent in a channel
     if message.content.startswith(config.PREFIX + 'count'):
@@ -31,7 +34,7 @@ async def on_message(message):
             if log.author == message.author:
                 counter += 1
 
-        await client.edit_message(tmp, 'You have {} messages.'.format(counter))
+        await client.edit_message(tmp, message.author.mention + ': You have {} messages.'.format(counter))
     
     # Sleep
     elif message.content.startswith(config.PREFIX + 'sleep'):
@@ -40,9 +43,10 @@ async def on_message(message):
 
 @client.event
 async def on_member_join(member):
-    if config.WELCOME_CHANNEL_ID is not None:
+    if config.WELCOME_CHANNEL is not None:
         server = member.server
-        channel = server.get_channel(config.WELCOME_CHANNEL_ID)
+        # channel = server.get_channel(config.WELCOME_CHANNEL_ID)
+        channel = discord.utils.get(server.channels, name=config.WELCOME_CHANNEL)
         await client.send_message(channel, "Welcome to " + server.name + ", " + member.mention + "!")
 
 # Start bot
