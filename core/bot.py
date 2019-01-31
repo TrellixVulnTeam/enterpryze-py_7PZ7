@@ -9,7 +9,7 @@ client = discord.Client()
 async def on_ready():
     print('Logged in as:', client.user.name, "(" + client.user.id + ")")
     
-    # Update status
+    # Set status
     presence = discord.Game(name=config.PREFIX+"help for help")
     await client.change_presence(game=presence)
 
@@ -18,33 +18,56 @@ async def on_ready():
 # Handle message events
 @client.event
 async def on_message(message):
-    # Active chat logging
-    print(message.timestamp, '[' + message.server.name + '/' + message.channel.name + '/' + message.author.name + ']:', message.content)
+    author = message.author
+    channel = message.channel
+    content = message.content
 
-    # Ping pong testing
-    if message.content.startswith(config.PREFIX + 'ping'):
-        await client.send_message(message.channel, message.author.mention + ': Pong!')
+    # Active chat logging
+    if author.bot is False:
+        print(message.timestamp, '[' + message.server.name + '/' + channel.name + '/' + author.name + ']:', content)
+
+    # Ping/pong 
+    if content.startswith(config.PREFIX + 'ping'):
+        await client.send_message(channel, author.mention + ': Pong!')
     
+    # Help
+    if content.startswith(config.PREFIX + 'help'):
+        await client.send_message(channel, author.mention + ": A list of commands and usage instructions has been sent to you via PM.")
+        await client.send_message(author, "Help")
+
+    # Vote
+    if content.startswith(config.PREFIX + 'vote'):
+        topic = ' '.join(content.split(' ')[1:]) # Get every word after the command
+        vote_message = await client.send_message(channel, 'A vote has been called by ' + author.mention + ': ' + topic + '\nVote by adding reactions.')
+        await client.add_reaction(vote_message, discord.Emoji(name="white_check_mark"))
+        await client.add_reaction(vote_message, discord.Emoji(name="x"))
+
     # Count how many messages a user has sent in a channel
-    if message.content.startswith(config.PREFIX + 'count'):
+    if content.startswith(config.PREFIX + 'count'):
         
         counter = 0
-        tmp = await client.send_message(message.channel, 'Calculating messages...')
-        async for log in client.logs_from(message.channel, limit=100):
-            if log.author == message.author:
+        tmp = await client.send_message(channel, 'Calculating messages...')
+        async for log in client.logs_from(channel, limit=100):
+            if log.author == author:
                 counter += 1
 
-        await client.edit_message(tmp, message.author.mention + ': You have {} messages.'.format(counter))
+        await client.edit_message(tmp, author.mention + ': You have {} messages.'.format(counter))
     
     # Sleep
-    elif message.content.startswith(config.PREFIX + 'sleep'):
+    elif content.startswith(config.PREFIX + 'sleep'):
         await asyncio.sleep(5)
-        await client.send_message(message.channel, 'Done sleeping')
+        await client.send_message(channel, 'Done sleeping')
+
+@client.event
+async def on_reaction_add(reaction, user):
+    print("oh yeah yeah")
+    print(reaction.emoji)
 
 @client.event
 async def on_member_join(member):
+    server = member.server
+    print(message.timestamp, "[" + server.name + "]:", member.name, "joined")
     if config.WELCOME_CHANNEL is not None:
-        server = member.server
         # channel = server.get_channel(config.WELCOME_CHANNEL_ID)
         channel = discord.utils.get(server.channels, name=config.WELCOME_CHANNEL)
         await client.send_message(channel, "Welcome to " + server.name + ", " + member.mention + "!")
