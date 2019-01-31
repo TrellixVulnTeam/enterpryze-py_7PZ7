@@ -2,10 +2,14 @@ import discord
 import asyncio
 import config
 from discord.utils import get
-import database
+from database import database
 
-print('discord.py v' + discord.__version__)
+# Initialize discord connection
 client = discord.Client()
+print('discord.py v' + discord.__version__)
+
+# Initialize database connection
+database = database.Connection()
 
 # When bot has loaded
 @client.event
@@ -66,14 +70,17 @@ async def on_message(message):
 
         await client.edit_message(tmp, author.mention + ': You have {} messages.'.format(counter))
 
+# Handle server join events
 @client.event
 async def on_member_join(member):
     server = member.server
-    print(message.timestamp, "[" + server.name + "]:", member.name, "joined")
+    print("[" + server.name + "]:", member.name, "(" + member.id + ") joined")
     if config.WELCOME_CHANNEL is not None:
         # channel = server.get_channel(config.WELCOME_CHANNEL_ID)
         channel = get(server.channels, name=config.WELCOME_CHANNEL)
         await client.send_message(channel, "Welcome to " + server.name + ", " + member.mention + "!")
+        # Register user
+        database.get_user(member.id)
 
 # Start bot
 client.run(config.TOKEN)
