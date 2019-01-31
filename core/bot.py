@@ -1,7 +1,9 @@
 import discord
 import asyncio
 import config
+from discord.utils import get
 
+print('discord.py v' + discord.__version__)
 client = discord.Client()
 
 # When bot has loaded
@@ -10,7 +12,7 @@ async def on_ready():
     print('Logged in as:', client.user.name, "(" + client.user.id + ")")
     
     # Set status
-    presence = discord.Game(name=config.PREFIX+"help for help")
+    presence = discord.Game(name=config.PREFIX + "help for help")
     await client.change_presence(game=presence)
 
     print('Ready.')
@@ -19,13 +21,17 @@ async def on_ready():
 @client.event
 async def on_message(message):
     author = message.author
+
+    # Don't respond to bots, includes self
+    if author.bot is True:
+        return
+
     channel = message.channel
     content = message.content
 
     # Active chat logging
-    if author.bot is False:
-        print(message.timestamp, '[' + message.server.name + '/' + channel.name + '/' + author.name + ']:', content)
-
+    print(message.timestamp, '[' + message.server.name + '/' + channel.name + '/' + author.name + ']:', content)
+    
     # Ping/pong 
     if content.startswith(config.PREFIX + 'ping'):
         await client.send_message(channel, author.mention + ': Pong!')
@@ -38,9 +44,15 @@ async def on_message(message):
     # Vote
     if content.startswith(config.PREFIX + 'vote'):
         topic = ' '.join(content.split(' ')[1:]) # Get every word after the command
-        vote_message = await client.send_message(channel, 'A vote has been called by ' + author.mention + ': ' + topic + '\nVote by adding reactions.')
-        await client.add_reaction(vote_message, discord.Emoji(name="white_check_mark"))
-        await client.add_reaction(vote_message, discord.Emoji(name="x"))
+        vote_message = await client.send_message(channel, 'A vote has been called by ' + author.mention + ': **' + topic + '**\nVote by adding reactions. Voting will close in 60 seconds.')
+        await client.add_reaction(vote_message, config.AYE)
+        await client.add_reaction(vote_message, config.NAY)
+        await asyncio.sleep(config.DEFAULT_VOTE_TIME)
+        results = vote_message.reactions
+        results_aye = get(results, emoji=config.AYE)
+        results_nay = get(results, emoji=config.NAY)
+        print(results_aye, results_nay)
+        await client.send_message(channel, "The vote by " + author.mention + " has ended.")
 
     # Count how many messages a user has sent in a channel
     if content.startswith(config.PREFIX + 'count'):
@@ -52,16 +64,6 @@ async def on_message(message):
                 counter += 1
 
         await client.edit_message(tmp, author.mention + ': You have {} messages.'.format(counter))
-    
-    # Sleep
-    elif content.startswith(config.PREFIX + 'sleep'):
-        await asyncio.sleep(5)
-        await client.send_message(channel, 'Done sleeping')
-
-@client.event
-async def on_reaction_add(reaction, user):
-    print("oh yeah yeah")
-    print(reaction.emoji)
 
 @client.event
 async def on_member_join(member):
@@ -69,7 +71,7 @@ async def on_member_join(member):
     print(message.timestamp, "[" + server.name + "]:", member.name, "joined")
     if config.WELCOME_CHANNEL is not None:
         # channel = server.get_channel(config.WELCOME_CHANNEL_ID)
-        channel = discord.utils.get(server.channels, name=config.WELCOME_CHANNEL)
+        channel = get(server.channels, name=config.WELCOME_CHANNEL)
         await client.send_message(channel, "Welcome to " + server.name + ", " + member.mention + "!")
 
 # Start bot
