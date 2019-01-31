@@ -2,6 +2,7 @@ import discord
 import asyncio
 import config
 from discord.utils import get
+import database
 
 print('discord.py v' + discord.__version__)
 client = discord.Client()
