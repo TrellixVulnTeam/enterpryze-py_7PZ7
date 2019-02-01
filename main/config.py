@@ -1,4 +1,5 @@
 # General
+TOKEN_LOCATION = "E:\Projects\EnterpRyzeToken.txt"
 PREFIX = '$'
 ADMIN_PREFIX = PREFIX
 

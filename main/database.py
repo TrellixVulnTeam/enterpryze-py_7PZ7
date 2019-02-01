@@ -22,7 +22,7 @@ class Connection:
         user = self.users.find_one({"id": discord_id})
         if user is None:
             print('[DATABASE]: User', discord_id, 'not found. Creating new user.')
-            user = self.new_user(discord_id)
+            user = self.users.find_one({"_id": self.new_user(discord_id)})
         else:
             print('[DATABASE]: User', discord_id, 'found.')
         return user
@@ -31,8 +31,8 @@ class Connection:
         """Creates a new user with their Discord user id and default settings."""
         return self.users.insert_one({"id": discord_id, "xp": 0})
 
-    def update_server(self, discord_id, key, value):
-        self.users.update_one({"id": discord_id}, {"$set": {key: value}})
+    def update_user(self, discord_id, key, value, operation="set"):
+        self.users.update_one({"id": discord_id}, {"$"+operation: {key: value}})
 
     # Server functions
     def get_server(self, server_id):
@@ -40,14 +40,14 @@ class Connection:
         server = self.servers.find_one({"id": server_id})
         if server is None:
             print('[DATABASE]: Server', server_id, 'not found. Creating new server.')
-            server = self.new_server(server_id)
+            server = self.servers.find_one({"_id": self.new_server(server_id).inserted_id})
         else:
             print('[DATABASE]: Server', server_id, 'found.')
         return server
 
     def new_server(self, server_id):
         """Creates a new server with its server id and default settings."""
-        return self.servers.insert_one({"id": server_id, "welcome_channel": None, "bot_channel": None, "admins": {}})
+        return self.servers.insert_one({"id": server_id, "welcome_channel": None, "bot_channel": None, "admins": []})
 
     def update_server(self, server_id, key, value, operation="set"):
         self.servers.update_one({"id": server_id}, {"$"+operation: {key: value}})

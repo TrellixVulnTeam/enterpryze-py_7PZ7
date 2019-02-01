@@ -184,4 +184,5 @@ def is_admin(member):
 
 
 # Start bot
-client.run(config.TOKEN)
+token = open(config.TOKEN_LOCATION, "r").readline()
+client.run(token)
