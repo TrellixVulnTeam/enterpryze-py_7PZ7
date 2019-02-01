@@ -23,13 +23,14 @@ class Connection:
         if user is None:
             print('[DATABASE]: User', discord_id, 'not found. Creating new user.')
             user = self.users.find_one({"_id": self.new_user(discord_id)})
-        else:
-            print('[DATABASE]: User', discord_id, 'found.')
+        # else:
+        #     print('[DATABASE]: User', discord_id, 'found.')
         return user
 
     def new_user(self, discord_id):
         """Creates a new user with their Discord user id and default settings."""
         return self.users.insert_one({"id": discord_id, "xp": 0})
+        print('[DATABASE]: User', discord_id, 'updated.')
 
     def update_user(self, discord_id, key, value, operation="set"):
         self.users.update_one({"id": discord_id}, {"$"+operation: {key: value}})
@@ -41,8 +42,8 @@ class Connection:
         if server is None:
             print('[DATABASE]: Server', server_id, 'not found. Creating new server.')
             server = self.servers.find_one({"_id": self.new_server(server_id).inserted_id})
-        else:
-            print('[DATABASE]: Server', server_id, 'found.')
+        # else:
+        #     print('[DATABASE]: Server', server_id, 'found.')
         return server
 
     def new_server(self, server_id):
@@ -51,5 +52,6 @@ class Connection:
 
     def update_server(self, server_id, key, value, operation="set"):
         self.servers.update_one({"id": server_id}, {"$"+operation: {key: value}})
+        print('[DATABASE]: Server', server_id, 'updated.')
 
     
