@@ -47,7 +47,7 @@ class Connection:
 
     def new_server(self, server_id):
         """Creates a new server with its server id and default settings."""
-        return self.servers.insert_one({"id": server_id, "welcome_channel": None, "bot_channel": None})
+        return self.servers.insert_one({"id": server_id, "welcome_channel": None, "bot_channel": None, "admins": {}})
 
     def update_server(self, server_id, key, value, operation="set"):
         self.servers.update_one({"id": server_id}, {"$"+operation: {key: value}})

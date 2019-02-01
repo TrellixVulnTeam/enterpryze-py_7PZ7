@@ -99,10 +99,35 @@ async def on_message(message):
             if new_admin is None:
                 await client.send_message(channel, author.mention + ": User with name \"" + new_admin_name + "\" was not found.")
             else:
+                # Bots cannot be admins
                 if new_admin.bot:
-                    await client.send_message(channel, author.mention + ": User with name \"" + new_admin_name + "\" is a bot.")
+                    await client.send_message(channel, author.mention + ": " + new_admin_name + " is a bot.")
                 else:
-                database.update_server(author.server.id, "admins", new_channel.id, operation="push")
+                    server_db = database.get_server(author.server.id)
+                    # Check if user is already an admin
+                    for admin_id in server_db['admins']:
+                        if admin_id == new_admin.id:
+                            await client.send_message(channel, author.mention + ": " + new_admin_name + " is already an admin.")
+                            return
+                    # Add user to admin list
+                    database.update_server(author.server.id, "admins", new_admin.id, operation="push")
+                    await client.send_message(channel, author.mention + ": " + new_admin.mention + " is now an admin.")
+
+        if content.startswith(config.ADMIN_PREFIX + 'unadmin'):
+            old_admin_name = ' '.join(content.split(' ')[1:])
+            old_admin = get(author.server.members, name=old_admin_name)
+            if old_admin is None:
+                await client.send_message(channel, author.mention + ": User with name \"" + old_admin_name + "\" was not found.")
+            else:
+                server_db = database.get_server(author.server.id)
+                # Check if user is an admin
+                for admin_id in server_db['admins']:
+                    if admin_id == old_admin.id:
+                        database.update_server(author.server.id, "admins", old_admin.id, operation="pull")
+                        await client.send_message(channel, author.mention + ": " + old_admin.mention + " is no longer an admin.")
+                        return
+                # If user is not an admin, say so
+                await client.send_message(channel, author.mention + ": " + old_admin_name + " is not an admin.")
 
     else:
         await client.send_message(channel, author.mention + ": You do not have permission to do that.")
