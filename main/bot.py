@@ -8,6 +8,10 @@ import database
 client = discord.Client()
 print('discord.py v' + discord.__version__)
 
+# Voice
+voice_client = None
+player = None
+
 # Initialize database connection
 database = database.Connection()
 
@@ -73,8 +77,55 @@ async def on_message(message):
 
         await client.edit_message(tmp, author.mention + ': You have {} messages.'.format(counter))
 
+    # Join voice channel
+    if content.startswith(config.PREFIX + 'join') or content.startswith(config.PREFIX + 'connect'):
+        voice_channel = author.voice.voice_channel
+        if voice_channel is None:
+            await client.send_message(channel, author.mention + ": You are not in a voice channel.")
+        else:
+            global voice_client
+            if voice_client is None:
+                voice_client = await client.join_voice_channel(voice_channel)
+            else:
+                if voice_channel == voice_client.channel:
+                    await client.send_message(channel, author.mention + ": I am already in that voice channel.")
+                else:
+                    await voice_client.move_to(voice_channel)
+    
+    # Leave voice channel
+    if content.startswith(config.PREFIX + 'leave') or content.startswith(config.PREFIX + 'disconnect'):
+        if voice_client is None:
+            await client.send_message(channel, author.mention + ": I am not in a voice channel.")
+        else:
+            await voice_client.disconnect()
+            voice_client = None
+
+    # Play youtube video
+    if content.startswith(config.PREFIX + 'yt') or content.startswith(config.PREFIX + 'youtube'):
+        song = ' '.join(content.split(' ')[1:]) # Get every word after the command
+        if voice_client is None:
+            await client.send_message(channel, author.mention + ": I am not in a voice channel.")
+        else:
+            beforeArgs = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+            global player
+            if player is None:
+                player = await voice_client.create_ytdl_player(url=song, before_options=beforeArgs)
+            else:
+                if player.is_playing():
+                    await client.send_message(channel, author.mention + ": I am already playing something.")
+                else:
+                    player = await voice_client.create_ytdl_player(url=song, before_options=beforeArgs)
+                    player.start()
+
+    if content.startswith(config.PREFIX + 'stop'):
+        if player is None:
+            await client.send_message(channel, author.mention + ": Nothing is playing.")
+        else:
+            player.stop()
+            player = None
+
     # Admin commands
-    if(is_admin(author)):
+    if is_admin(author):
         if content.startswith(config.ADMIN_PREFIX + 'setwelcomechannel'):
             new_channel_name = ' '.join(content.split(' ')[1:])
             new_channel = get(author.server.channels, name=new_channel_name)
@@ -132,6 +183,13 @@ async def on_message(message):
     else:
         await client.send_message(channel, author.mention + ": You do not have permission to do that.")
 
+    if is_owner(author):
+        if content.startswith(config.ADMIN_PREFIX + 'shutdown'):
+            print('Shutting down...')
+            await client.logout()
+            await client.close()
+
+
 # Handle server join events
 @client.event
 async def on_member_join(member):
@@ -178,10 +236,14 @@ def get_bot_channel(server):
     return channel
 
 def is_admin(member):
-    if member.server.owner == member:
+    if is_owner(member):
         return True
     return False
 
+def is_owner(member):
+    if member.server.owner == member:
+        return True
+    return False
 
 # Start bot
 token = open(config.TOKEN_LOCATION, "r").readline()
