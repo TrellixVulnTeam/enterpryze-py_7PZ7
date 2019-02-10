@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: pyo
+Version: 0.9.1
+Summary: Python dsp module.
+Home-page: https://github.com/belangeo/pyo
+Author: Olivier Belanger
+Author-email: belangeo@gmail.com
+License: LGPLv3+
+Description: Python module written in C to help digital signal processing script creation.
+Platform: UNKNOWN
